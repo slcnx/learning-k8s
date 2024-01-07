@@ -99,6 +99,18 @@
         - kubeadm={{ kube_release }}
         - kubectl={{ kube_release }}
 
+  - name: Configure cri docker
+    copy:
+      src: cri-docker.service
+      dest: /lib/systemd/system/cri-docker.service
+    register: cridockerconfig
+  - name: Reload cri docker
+    systemd:
+      name: cri-docker
+      daemon_reload: true
+      state: restarted
+    when: cridockerconfig.changed
+
   - name: Configure --node-ip for kubelet
     lineinfile:
       path: /etc/default/kubelet
