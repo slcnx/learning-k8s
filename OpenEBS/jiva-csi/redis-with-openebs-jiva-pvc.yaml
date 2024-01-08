@@ -3,6 +3,7 @@ kind: Pod
 metadata:
   name: redis-with-openebs-jiva-pvc
 spec:
+  nodeName: k8s-node01
   containers:
   - name: redis
     image: redis:7-alpine
