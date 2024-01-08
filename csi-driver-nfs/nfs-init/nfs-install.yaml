@@ -1,0 +1,25 @@
+- hosts: master
+  tasks:
+  - name: install nfs server
+    package: 
+      name: nfs-server
+      state: present
+  - name: start nfs server
+    systemd:
+      name: nfs-server
+      state: started
+      enabled: true
+  - name: copy file
+    copy:
+      src: exports
+      dest: /etc/exports
+    register: nfsconfig
+  - name: exportfs
+    shell: exportfs -arv
+    when: nfsconfig.changed
+- hosts: nodes
+  tasks:
+  - name: install nfs utils
+    package:
+      name: nfs-common
+      state: present
