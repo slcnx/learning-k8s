@@ -1413,7 +1413,7 @@ spec:
       serviceAccountName: openebs-lvm-controller-sa
       containers:
         - name: csi-resizer
-          image: registry.k8s.io/sig-storage/csi-resizer:v1.8.0
+          image: registry.cn-hangzhou.aliyuncs.com/mageedu_mirrors/csi-resizer:v1.8.0
           args:
             - "--v=5"
             - "--csi-address=$(ADDRESS)"
@@ -1426,7 +1426,7 @@ spec:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
         - name: csi-snapshotter
-          image: registry.k8s.io/sig-storage/csi-snapshotter:v6.2.2
+          image: registry.cn-hangzhou.aliyuncs.com/mageedu_mirrors/csi-snapshotter:v6.2.2
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -1438,13 +1438,13 @@ spec:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
         - name: snapshot-controller
-          image: registry.k8s.io/sig-storage/snapshot-controller:v6.2.2
+          image: registry.cn-hangzhou.aliyuncs.com/mageedu_mirrors/snapshot-controller:v6.2.2
           args:
             - "--v=5"
             - "--leader-election=true"
           imagePullPolicy: IfNotPresent
         - name: csi-provisioner
-          image: registry.k8s.io/sig-storage/csi-provisioner:v3.5.0
+          image: registry.cn-hangzhou.aliyuncs.com/mageedu_mirrors/csi-provisioner:v3.5.0
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -1470,7 +1470,7 @@ spec:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
         - name: openebs-lvm-plugin
-          image: openebs/lvm-driver:1.4.0
+          image: registry.cn-hangzhou.aliyuncs.com/mageedu_mirrors/lvm-driver:1.4.0
           imagePullPolicy: IfNotPresent
           env:
             - name: OPENEBS_CONTROLLER_DRIVER
@@ -1636,7 +1636,7 @@ spec:
       hostNetwork: true
       containers:
         - name: csi-node-driver-registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.8.0
+          image: registry.cn-hangzhou.aliyuncs.com/mageedu_mirrors/csi-node-driver-registrar:v2.8.0
           imagePullPolicy: IfNotPresent
           args:
             - "--v=5"
@@ -1666,7 +1666,7 @@ spec:
           securityContext:
             privileged: true
             allowPrivilegeEscalation: true
-          image: openebs/lvm-driver:1.4.0
+          image: registry.cn-hangzhou.aliyuncs.com/mageedu_mirrors/lvm-driver:1.4.0
           imagePullPolicy: IfNotPresent
           args:
             - "--nodeid=$(OPENEBS_NODE_ID)"
