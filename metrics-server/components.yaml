@@ -139,7 +139,7 @@ spec:
         - --kubelet-insecure-tls
         - --kubelet-use-node-status-port
         - --metric-resolution=15s
-        image: registry.k8s.io/metrics-server/metrics-server:v0.6.3
+        image: registry.cn-hangzhou.aliyuncs.com/mageedu_mirrors/metrics-server:v0.6.3
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3
