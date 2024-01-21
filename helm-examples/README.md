@@ -16,18 +16,26 @@ helm repo update # 更新缓存
 helm search repo <chartName> # 获取是否存在chart?
 ```
 
-# 查看
+# release 查看
 ```
 # 清单
 helm get manifests wordpress -n blog
-# 用户定义的值
+# 用户定义的值, 方便 helm install -f value.yaml wordpress
 helm get values    wordpress -n blog
 ```
 
-# 版本查看及回滚
+# release 版本更新及 回滚
 ```
-helm history        wordpress -n blog
+# 更新
+helm upgrade wordpress -n blog [options...]
+# 回滚
+helm history        wordpress -n blog # 查看历史版本
 helm rollback 1     wordpress -n blog
+```
+
+# 删除应用
+```
+helm delete wordpress -n blog
 ```
 
 # 手工写业务代码应用
