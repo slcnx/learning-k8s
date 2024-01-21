@@ -3,8 +3,8 @@
 比较好的社区 官方、bitnami 
 
 # 仓库
-helm registry，里面有多个charts
-oci直接使用目标helm chart
+1. helm registry，里面有多个charts
+2. oci直接使用目标helm chart
 
 仓库被helm install之后，就变成运行的实例**helm release**
 
@@ -40,5 +40,6 @@ helm delete wordpress -n blog
 
 # 手工写业务代码应用
 ```
-helm
+mkdir temp && cd temp
+helm create <chartName> # 可用的，留下。不可用的，删除。
 ```
