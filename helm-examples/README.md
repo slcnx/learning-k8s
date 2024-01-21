@@ -6,6 +6,8 @@
 helm registry，里面有多个charts
 oci直接使用目标helm chart
 
+仓库被helm install之后，就变成运行的实例**helm release**
+
 # helm registry 管理
 ```
 helm repo add .... # 文档有
