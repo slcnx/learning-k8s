@@ -1,7 +1,8 @@
 - hosts: all
   become: true
   vars:
-    version: "1.29.1-1.1"
+    kube_version: "v1.29"
+    kube_release: "1.29.3-1.1"
   tasks:
   - name: Install packages that allow apt to be used over HTTPS
     apt:
@@ -78,13 +79,13 @@
 
   - name: Add the apt signing key for Kubernetes
     ansible.builtin.apt_key:
-      url: https://mirrors.aliyun.com/kubernetes-new/core/stable/v1.29/deb/Release.key
+      url: https://mirrors.aliyun.com/kubernetes-new/core/stable/{{ kube_version }}/deb/Release.key
       keyring: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
       state: present
 
   - name: Add the apt repository for Kubernetes
     apt_repository:
-      repo: deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://mirrors.aliyun.com/kubernetes-new/core/stable/v1.29/deb/ /
+      repo: deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://mirrors.aliyun.com/kubernetes-new/core/stable/{{ kube_version }}/deb/ /
       state: present
       filename: kubernetes.list
 
@@ -94,9 +95,21 @@
       update_cache: yes
     vars:
       packages:
-        - kubelet={{ version }}
-        - kubeadm={{ version }}
-        - kubectl={{ version }}
+        - kubelet={{ kube_release }}
+        - kubeadm={{ kube_release }}
+        - kubectl={{ kube_release }}
+
+  - name: Configure cri docker
+    copy:
+      src: cri-docker.service
+      dest: /lib/systemd/system/cri-docker.service
+    register: cridockerconfig
+  - name: Reload cri docker
+    systemd:
+      name: cri-docker
+      daemon_reload: true
+      state: restarted
+    when: cridockerconfig.changed
 
   - name: Configure cri docker
     copy:
@@ -128,4 +141,3 @@
   handlers:
     - name: docker status
       service: name=docker state=started
-
