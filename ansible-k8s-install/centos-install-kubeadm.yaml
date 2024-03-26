@@ -1,0 +1,131 @@
+- hosts: all
+  become: true
+  vars:
+    kube_version: "v1.28"
+    kube_release: "1.28.8-*"
+  tasks:
+
+  - name: 安装必要的一些系统工具
+    dnf:
+      name: "{{item}}"
+    loop:
+    - yum-utils 
+    - device-mapper-persistent-data 
+    - lvm2
+  - name: Add the yum repository for the stable Docker version
+    shell: yum-config-manager --add-repo https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+  - shell: sed -i 's+download.docker.com+mirrors.aliyun.com/docker-ce+' /etc/yum.repos.d/docker-ce.repo
+
+
+  - name: Install Containerd and its dependencies
+    dnf:
+      name: "{{ packages }}"
+      state: latest
+    vars:
+      packages:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+    notify:
+      - docker status
+
+  - name: Copy containerd config file with owner and permissions
+    ansible.builtin.copy:
+      src: files/containerd-config.toml
+      dest: /etc/containerd/config.toml
+      owner: root
+      group: root
+      mode: '0640'
+    register: containerdconfig
+
+  - name: Restart containerd.io
+    service:
+      name: containerd
+      daemon_reload: yes
+      state: restarted
+    when: containerdconfig.changed
+
+  - name: Copy crictl config file with owner and permissions
+    ansible.builtin.copy:
+      src: files/crictl.yaml
+      dest: /etc/crictl.yaml
+      owner: root
+      group: root
+      mode: '0644'
+
+  - name: Remove swapfile from /etc/fstab
+    mount:
+      name: "{{ item }}"
+      fstype: swap
+      state: absent
+    with_items:
+      - swap
+      - none
+
+  - name: Disable swap
+    command: swapoff -a
+    when: ansible_swaptotal_mb > 0
+
+  - name: Add the yum repository for the Kubernetes version
+    yum_repository:
+      name: kubernetes
+      baseurl: https://mirrors.aliyun.com/kubernetes-new/core/stable/v1.28/rpm/
+      state: present
+      gpgkey: https://mirrors.aliyun.com/kubernetes-new/core/stable/v1.28/rpm/repodata/repomd.xml.key
+      enabled: 1
+      gpgcheck: 1
+      description: 'Kubernetes'
+
+  - name: Install Kubernetes binaries
+    dnf:
+      name: "{{ packages }}"
+      update_cache: yes
+    vars:
+      packages:
+        - kubelet-{{ kube_release }}
+        - kubeadm-{{ kube_release }}
+        - kubectl-{{ kube_release }}
+
+  - name: Configure cri docker
+    copy:
+      src: cri-docker.service
+      dest: /lib/systemd/system/cri-docker.service
+    register: cridockerconfig
+
+  - name: Reload cri docker
+    systemd:
+      name: cri-docker
+      daemon_reload: true
+      state: restarted
+    when: cridockerconfig.changed
+
+  - name: Configure cri docker
+    copy:
+      src: cri-docker.service
+      dest: /lib/systemd/system/cri-docker.service
+    register: cridockerconfig
+  - name: Reload cri docker
+    systemd:
+      name: cri-docker
+      daemon_reload: true
+      state: restarted
+    when: cridockerconfig.changed
+
+  - name: Configure --node-ip for kubelet
+    lineinfile:
+      path: /etc/default/kubelet
+      regexp: "^KUBELET_EXTRA_ARGS=.*--node-ip="
+      line: KUBELET_EXTRA_ARGS=--node-ip={{ node_ip }}
+      create: yes
+    register: kubeletconfig
+
+  - name: Restart kubelet
+    service:
+      name: kubelet
+      daemon_reload: yes
+      state: restarted
+    when: kubeletconfig.changed
+
+  handlers:
+    - name: docker status
+      service: name=docker state=started
