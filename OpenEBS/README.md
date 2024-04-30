@@ -4,31 +4,58 @@ OpenEBS是CAS存储机制的著名实现之一，由CNCF孵化。
 
 ## 部署OpenEBS
 
-运行如下命令，即可部署基础的OpenEBS系统，默认部署在openebs名称空间。
+### 部署
+
+以下三种部署选择其中之一即可。
+
+#### 部署4.0版本
+
+运行如下命令，即可部署基础的OpenEBS 4.0的系统，支持基于hostpath和lvm的local pv，默认部署在openebs名称空间。
 
 ```bash 
-kubectl apply -f https://openebs.github.io/charts/openebs-operator.yaml
+kubectl apply -f https://raw.githubusercontent.com/iKubernetes/learning-k8s/master/OpenEBS/deployment/openebs-localpv-lvm-4.0.yaml
 ```
 
-若需要支持Jiva、cStor、Local PV ZFS和Local PV LVM等数据引擎，还需要额外部署相关的组件。例如，运行如下命令，即可于openebs名称空间中部署Jiva CSI Controller及CSI Plugin。
+#### 部署3.0版本
+
+运行如下命令，即可部署基础的OpenEBS 3.10版本的系统，支持基于hostpath的local pv，默认部署在openebs名称空间。
 
 ```bash
-kubectl apply -f https://openebs.github.io/charts/jiva-operator.yaml
+kuectl apply -f https://openebs.github.io/charts/openebs-operator.yaml
 ```
 
-运行如下命令，即可部署Local PV LVM相关的Controller和CSI Plugin。需要说明的是，Local PV LVM相关的Pod部署于kube-system名称空间。
+#### 部署3.0版本（第2种部署方式）
 
-```bash
-kubectl apply -f https://openebs.github.io/charts/lvm-operator.yaml
+```bash 
+kubectl apply -f https://raw.githubusercontent.com/openebs/openebs/v3.10.0/k8s/openebs-operator.yaml
 ```
 
-> 提示：如需要用到Jiva数据引擎，则需要事先在每个节点上部署iSCSI client。Ubuntu系统的安装命令如下。
->
-> ```bash 
-> sudo apt-get update
-> sudo apt-get install open-iscsi
-> sudo systemctl enable --now iscsid
-> ```
+而后，则要创建StorageClass资源对象openebs-hostpath，注意按需修改其节点上的存储目录路径。示例配置如下。
+
+```yaml
+---
+# Source: openebs/charts/localpv-provisioner/templates/hostpath-class.yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: openebs-hostpath
+  annotations:
+    openebs.io/cas-type: local
+    cas.openebs.io/config: |
+      - name: StorageType
+        value: "hostpath"
+      - name: BasePath
+        value: "/var/openebs/local"
+provisioner: openebs.io/local
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete
+```
+
+运行如下命令即可直接创建相关的存储类。
+
+```bash 
+kubectl apply -f https://raw.githubusercontent.com/iKubernetes/learning-k8s/master/OpenEBS/deployment/storageclass-openebs-hostpath.yaml
+```
 
 ### 测试使用OpenEBS Local PV
 
@@ -48,9 +75,49 @@ spec:
       storage: 5G
 ```
 
+
+
+## 部署和测试使用Jiva PV
+
+以下操作，仅适用于3.x版本的OpenEBS。
+
+### 部署Jiva Operator
+
+部署Jiva Operator。
+
+```bash
+kubectl apply -f https://openebs.github.io/charts/jiva-operator.yaml
+```
+
+查看相关的Pod的创建状态。
+
+```bash
+kubectl get pods -n openebs -l name=jiva-operator
+```
+
+> 提示：如需要用到Jiva数据引擎，则需要事先在每个节点上部署iSCSI client。Ubuntu系统的安装命令如下。
+>
+> ```bash 
+> sudo apt-get update
+> sudo apt-get install open-iscsi
+> sudo systemctl enable --now iscsid
+> ```
+
 ### 测试使用Jiva PV
 
 创建JivaVolumePolicy，而后创建Jiva相关的StorageClass，即可从该StorageClass中请求创建PVC。
+
+## 部署和测试使用LVM PV
+
+以下操作，仅适用于3.x版本的OpenEBS。
+
+### 部署LVM Opertor
+
+```bash
+kubectl apply -f https://openebs.github.io/charts/lvm-operator.yaml
+```
+
+
 
 ### 测试使用Local PV using LVM
 
@@ -74,14 +141,6 @@ vgcreate lvmvg /dev/vdb1
 ```
 
 若仅在集群中的部分节点上创建了Volume Group，后面创建StorageClass时需要明确指明拥有VG的节点。
-
-#### 部署
-
-运行如下命令即可完成部署。
-
-```bash 
-$ kubectl apply -f https://openebs.github.io/charts/lvm-operator.yaml
-```
 
 #### 创建StorageClass
 
